@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="FinTrack Pro">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="FinTrack Pro">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>FinTrack Pro</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <!-- Firebase Config -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCmxzfXL6OhakSTr8fLScqm3c6zk-6m-Jo",
+      authDomain: "fintrack-pro-b52d8.firebaseapp.com",
+      projectId: "fintrack-pro-b52d8",
+      storageBucket: "fintrack-pro-b52d8.firebasestorage.app",
+      messagingSenderId: "437297838520",
+      appId: "1:437297838520:web:e60b0593e998b8a230374d"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script>
+  emailjs.init("U2VmLePkkGWu1aELI");
+
+  function sendOTPEmail(toEmail, toName, otpCode) {
+    return emailjs.send("service_nvnzy8s", "template_107v8iu", {
+      to_email: toEmail,
+      to_name: toName,
+      otp_code: otpCode,
+    });
+  }
+</script>
+  <!-- Reminder Sound -->
+<script>
+  var reminderSoundInterval = null;
+
+  function playReminderSound() {
+    // Stop any existing sound first
+    stopReminderSound();
+    // Play immediately
+    playBeeps();
+    // Then repeat every 4 seconds until dismissed
+    reminderSoundInterval = setInterval(playBeeps, 4000);
+  }
+
+  function stopReminderSound() {
+    if (reminderSoundInterval !== null) {
+      clearInterval(reminderSoundInterval);
+      reminderSoundInterval = null;
+    }
+  }
+
+  function playBeeps() {
+    try {
+      var context = new (window.AudioContext || 
+                    window.webkitAudioContext)();
+      function beep(frequency, duration, delay) {
+        var oscillator = context.createOscillator();
+        var gainNode = context.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(
+          0.3, context.currentTime + delay);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.001, context.currentTime + delay + duration);
+        oscillator.start(context.currentTime + delay);
+        oscillator.stop(context.currentTime + delay + duration);
+      }
+      // 3 beeps
+      beep(800, 0.3, 0.0);
+      beep(800, 0.3, 0.4);
+      beep(1000, 0.5, 0.8);
+    } catch(e) {
+      console.log('Audio error: ' + e);
+    }
+  }
+</script>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
