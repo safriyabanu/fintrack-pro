@@ -40,21 +40,28 @@ class _OtpScreenState extends State<OtpScreen> {
   void initState() {
     super.initState();
     _currentOtp = widget.otp;
-    _sendOTP();
+    Future.delayed(const Duration(seconds: 2), () {
+      _sendOTP();
+    });
     _startResendTimer();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    for (var c in _controllers) c.dispose();
-    for (var f in _focusNodes) f.dispose();
+    for (var c in _controllers) {
+      c.dispose();
+    }
+    for (var f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
   void _startResendTimer() {
     _resendTimer = 30;
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    _timer =
+        Timer.periodic(const Duration(seconds: 1), (_) {
       if (_resendTimer > 0) {
         setState(() => _resendTimer--);
       } else {
@@ -65,32 +72,68 @@ class _OtpScreenState extends State<OtpScreen> {
 
   Future<void> _sendOTP() async {
     try {
+      debugPrint(
+          '📧 Sending OTP: $_currentOtp to ${widget.email}');
       await sendOTPEmail(
               widget.email, widget.name, _currentOtp!)
           .toDart;
-    } catch (e) {
-      debugPrint('Email error: $e');
+      debugPrint('✅ OTP sent successfully!');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                backgroundColor: Color(0xFF00BFA5),
+                content: Text(
+                    '✅ OTP sent! Check your email.')));
+      }
+    } catch (e, stack) {
+      debugPrint('❌ Email error: ${e.toString()}');
+      debugPrint('❌ Stack: $stack');
+      // Try again after 3 seconds
+      await Future.delayed(const Duration(seconds: 3));
+      try {
+        debugPrint('🔄 Retrying...');
+        await sendOTPEmail(
+                widget.email, widget.name, _currentOtp!)
+            .toDart;
+        debugPrint('✅ OTP sent on retry!');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  backgroundColor: Color(0xFF00BFA5),
+                  content:
+                      Text('✅ OTP sent! Check your email.')));
+        }
+      } catch (e2, stack2) {
+        debugPrint('❌ Retry failed: ${e2.toString()}');
+        debugPrint('❌ Retry stack: $stack2');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  backgroundColor: Colors.redAccent,
+                  content: Text(
+                      '❌ Failed to send OTP. Please try resend.')));
+        }
+      }
     }
   }
 
   String _generateNewOtp() {
-    final random = DateTime.now().millisecondsSinceEpoch % 900000 + 100000;
+    final random =
+        DateTime.now().millisecondsSinceEpoch % 900000 +
+            100000;
     return random.toString();
   }
 
   Future<void> _resendOTP() async {
     setState(() => _resendLoading = true);
     _currentOtp = _generateNewOtp();
-    for (var c in _controllers) c.clear();
+    for (var c in _controllers) {
+      c.clear();
+    }
     _focusNodes[0].requestFocus();
     await _sendOTP();
     _startResendTimer();
     setState(() => _resendLoading = false);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('OTP resent! Check your email.')));
-    }
   }
 
   void _verifyOTP() {
@@ -99,7 +142,8 @@ class _OtpScreenState extends State<OtpScreen> {
     if (enteredOtp.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Please enter all 6 digits!')));
+              content:
+                  Text('Please enter all 6 digits!')));
       return;
     }
     if (_attempts >= 3) {
@@ -111,7 +155,6 @@ class _OtpScreenState extends State<OtpScreen> {
     }
     setState(() => _loading = true);
     if (enteredOtp == _currentOtp) {
-      // OTP correct!
       setState(() => _loading = false);
       showDialog(
         context: context,
@@ -131,7 +174,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     fontWeight: FontWeight.bold)),
           ]),
           content: const Text(
-            'Your email has been verified successfully!\nYou can now login.',
+            'Your email has been verified!\nYou can now login.',
             style: TextStyle(color: Colors.white70),
           ),
           actions: [
@@ -141,7 +184,8 @@ class _OtpScreenState extends State<OtpScreen> {
                 Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
-                        builder: (_) => const LoginScreen()),
+                        builder: (_) =>
+                            const LoginScreen()),
                     (route) => false);
               },
               child: const Text('GO TO LOGIN',
@@ -153,7 +197,6 @@ class _OtpScreenState extends State<OtpScreen> {
         ),
       );
     } else {
-      // OTP wrong
       _attempts++;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -163,7 +206,9 @@ class _OtpScreenState extends State<OtpScreen> {
           backgroundColor: Colors.redAccent,
         ),
       );
-      for (var c in _controllers) c.clear();
+      for (var c in _controllers) {
+        c.clear();
+      }
       _focusNodes[0].requestFocus();
     }
   }
@@ -182,11 +227,11 @@ class _OtpScreenState extends State<OtpScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            // Icon
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF00BFA5).withAlpha(30),
+                color:
+                    const Color(0xFF00BFA5).withAlpha(30),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.mark_email_read,
@@ -205,7 +250,31 @@ class _OtpScreenState extends State<OtpScreen> {
               style: const TextStyle(
                   color: Colors.white54, fontSize: 14),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 12),
+            // Check spam notice
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.orange.withAlpha(30),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                    color: Colors.orange.withAlpha(80)),
+              ),
+              child: const Row(children: [
+                Icon(Icons.info_outline,
+                    color: Colors.orange, size: 16),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Check your spam/junk folder if you don\'t see the email!',
+                    style: TextStyle(
+                        color: Colors.orange,
+                        fontSize: 11),
+                  ),
+                ),
+              ]),
+            ),
+            const SizedBox(height: 24),
             // OTP input boxes
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -262,13 +331,13 @@ class _OtpScreenState extends State<OtpScreen> {
               }),
             ),
             const SizedBox(height: 32),
-            // Verify button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _loading ? null : _verifyOTP,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00BFA5),
+                    backgroundColor:
+                        const Color(0xFF00BFA5),
                     padding: const EdgeInsets.symmetric(
                         vertical: 14)),
                 child: _loading
@@ -282,7 +351,6 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            // Resend button
             _resendTimer > 0
                 ? Text(
                     'Resend OTP in $_resendTimer seconds',
@@ -291,8 +359,9 @@ class _OtpScreenState extends State<OtpScreen> {
                         fontSize: 13),
                   )
                 : TextButton(
-                    onPressed:
-                        _resendLoading ? null : _resendOTP,
+                    onPressed: _resendLoading
+                        ? null
+                        : _resendOTP,
                     child: _resendLoading
                         ? const CircularProgressIndicator(
                             color: Color(0xFF00BFA5))
@@ -303,12 +372,12 @@ class _OtpScreenState extends State<OtpScreen> {
                                     FontWeight.bold)),
                   ),
             const SizedBox(height: 12),
-            // Attempts info
             if (_attempts > 0)
               Text(
                 '${3 - _attempts} attempts remaining',
                 style: const TextStyle(
-                    color: Colors.redAccent, fontSize: 12),
+                    color: Colors.redAccent,
+                    fontSize: 12),
               ),
           ],
         ),
