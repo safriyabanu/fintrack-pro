@@ -20,11 +20,5 @@ A personal finance tracker app built with Flutter and Firebase.
 - Provider
 - FL Chart
 
-## Setup
-1. Clone the repo
-2. Create `.env` file with your Firebase keys
-3. Run `flutter pub get`
-4. Run `flutter run`
-
 ## Developer
 Built by Safriya
